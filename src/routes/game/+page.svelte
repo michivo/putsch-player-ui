@@ -1,12 +1,16 @@
 <script lang="ts">
+	import { doc, getDoc, getDocs, onSnapshot } from 'firebase/firestore';
 	import { onMount } from 'svelte';
 	import { Toast, ToastBody, ToastHeader } from 'sveltestrap';
 	import { currentPlayer } from '../../stores/playerStore';
+	import { putschFirestore } from '../../tools/firebase';
+	import type { PlayerQuestStage } from '../../types/quest';
 
 	let innerVoiceText = '';
 	let voice: SpeechSynthesisVoice | null = null;
+	let firestoreUnsubscribe: Unsubscribe;
 
-	onMount(() => {
+	onMount(async () => {
 		speechSynthesis.addEventListener('voiceschanged', setVoice);
 		setVoice();
 		innerVoiceText = 'Hallo Spieler in';
@@ -14,7 +18,34 @@
 			innerVoiceText += ` ${$currentPlayer.id}`;
 		}
 		sayIt();
+
+		await initFirestore();
 	});
+
+	async function initFirestore() {
+		if (!$currentPlayer) {
+			return;
+		}
+		const docRef = doc(putschFirestore, 'playerQuests', $currentPlayer.id);
+		const querySnapshot = await getDoc(docRef);
+		if (querySnapshot.exists()) {
+			const playerStage = querySnapshot.data() as PlayerQuestStage;
+			if (playerStage.text) {
+				innerVoiceText = playerStage.text;
+				sayIt();
+			}
+		}
+
+		firestoreUnsubscribe = onSnapshot(docRef, (data) => {
+			if (data.exists()) {
+				const playerStage = data.data() as PlayerQuestStage;
+				if (playerStage.text) {
+					innerVoiceText = playerStage.text;
+					sayIt();
+				}
+			}
+		});
+	}
 
 	function setVoice() {
 		let voices = speechSynthesis.getVoices();
