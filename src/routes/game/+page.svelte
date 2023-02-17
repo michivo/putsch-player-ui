@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { doc, getDoc, getDocs, onSnapshot } from 'firebase/firestore';
-	import { onMount } from 'svelte';
+	import { doc, getDoc, getDocs, onSnapshot, type Unsubscribe } from 'firebase/firestore';
+	import { onDestroy, onMount } from 'svelte';
 	import { Toast, ToastBody, ToastHeader } from 'sveltestrap';
 	import { currentPlayer } from '../../stores/playerStore';
 	import { putschFirestore } from '../../tools/firebase';
@@ -20,6 +20,12 @@
 		sayIt();
 
 		await initFirestore();
+	});
+
+    onDestroy(() => {
+		if (firestoreUnsubscribe) {
+			firestoreUnsubscribe();
+		}
 	});
 
 	async function initFirestore() {
