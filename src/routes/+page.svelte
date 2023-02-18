@@ -12,6 +12,7 @@
 		players = await getPlayers();
 		if (players.length > 0) {
 			selectedPlayer = players[0];
+			currentPlayer.set(selectedPlayer);
 		}
 	});
 </script>
