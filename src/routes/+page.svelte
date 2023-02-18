@@ -6,13 +6,13 @@
 	import { currentPlayer } from '../stores/playerStore';
 
 	let players: Player[] | undefined = undefined;
-	let selectedPlayer: Player | null = null;
 
 	onMount(async () => {
 		players = await getPlayers();
 		if (players.length > 0) {
-			selectedPlayer = players[0];
-			currentPlayer.set(selectedPlayer);
+			if(!$currentPlayer) {
+				currentPlayer.set(players[0]);
+			}
 		}
 	});
 </script>
@@ -22,7 +22,7 @@
 	<Spinner />
 {:else}
 	<div class="form-group">
-		<select bind:value={selectedPlayer} on:change={() => currentPlayer.set(selectedPlayer)} class="form-control">
+		<select bind:value={$currentPlayer} class="form-control">
 			{#each players as player}
 				<option value={player}>{player.id}</option>
 			{/each}
