@@ -8,6 +8,12 @@
     $: {
         playlist: () => currentIndex = 0
     }
+
+    function updateIndex() {
+        if(playlist && currentIndex < playlist.audioFiles.length - 1) {
+            currentIndex++;
+        }
+    }
 </script>
 
 {#if !playlist}
@@ -17,6 +23,6 @@
 {:else}
     <h2>Playlist <i>{ playlist.name }</i></h2>
     {#each playlist.audioFiles as audioFile, index}
-        <PlaylistEntry {audioFile} {index} {currentIndex} on:ended="{() => currentIndex += 1}"></PlaylistEntry>
+        <PlaylistEntry {audioFile} {index} {currentIndex} on:ended="{() => updateIndex()}"></PlaylistEntry>
     {/each}
 {/if}

@@ -15,7 +15,6 @@
       newPlaylist.audioFiles.sort(comparePlaylistEntries);
       playlist = newPlaylist;
     } catch (err) {
-      console.log(err);
       playlist = undefined;
     } finally {
       loading = false;

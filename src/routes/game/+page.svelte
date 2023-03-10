@@ -1,15 +1,20 @@
 <script lang="ts">
   import { doc, getDoc, getDocs, onSnapshot, type Unsubscribe } from 'firebase/firestore';
   import { onDestroy, onMount } from 'svelte';
-  import { Toast, ToastBody, ToastHeader } from 'sveltestrap';
+  import { Spinner, Toast, ToastBody, ToastHeader } from 'sveltestrap';
+    import PlaylistPlayer from '../../components/PlaylistPlayer.svelte';
+  import { getPlaylist } from '../../services/eventhub';
   import { currentPlayer } from '../../stores/playerStore';
   import { putschFirestore } from '../../tools/firebase';
+  import type { Playlist, PlaylistEntry } from '../../types/playlist';
   import type { PlayerQuestStage } from '../../types/quest';
 
   let innerVoiceText = '';
   let voice: SpeechSynthesisVoice | null = null;
   let firestoreUnsubscribe: Unsubscribe;
   let currentStage: PlayerQuestStage | undefined = undefined;
+  let playlist: Playlist | undefined = undefined;
+  let loading = false;
 
   onMount(async () => {
     try {
@@ -20,9 +25,8 @@
         innerVoiceText += ` ${$currentPlayer.id}`;
       }
       sayIt();
-    }
-    catch {
-      console.log('Error initializing speech synthesis.')
+    } catch {
+      console.log('Error initializing speech synthesis.');
     }
 
     await initFirestore();
@@ -54,7 +58,12 @@
         currentStage = data.data() as PlayerQuestStage;
         if (currentStage.text) {
           innerVoiceText = currentStage.text;
-          sayIt();
+        }
+        console.log(currentStage);
+        if (currentStage.playlistName) {
+          loadPlaylist();
+        } else {
+          playlist = undefined;
         }
       }
     });
@@ -79,6 +88,37 @@
       speechSynthesis.speak(u);
     }
   }
+
+  function getIndex(entry: PlaylistEntry) {
+    const regex = /\d+\./;
+    const matches = regex.exec(entry.name);
+    if (!matches) {
+      return 0;
+    }
+
+    const match = matches[matches.length - 1];
+    return parseInt(match.substring(0, match.length - 1));
+  }
+
+  function comparePlaylistEntries(one: PlaylistEntry, other: PlaylistEntry): number {
+    return getIndex(one) - getIndex(other);
+  }
+
+  async function loadPlaylist() {
+    if (!currentStage || !currentStage.playlistName) {
+      return;
+    }
+    loading = true;
+    try {
+      const newPlaylist = await getPlaylist(currentStage.playlistName);
+      newPlaylist.audioFiles.sort(comparePlaylistEntries);
+      playlist = newPlaylist;
+    } catch (err) {
+      playlist = undefined;
+    } finally {
+      loading = false;
+    }
+  }
 </script>
 
 {#if $currentPlayer}
@@ -97,6 +137,11 @@
         {innerVoiceText}
       </ToastBody>
     </Toast>
+    {#if loading}
+      <Spinner />
+    {:else}
+      <PlaylistPlayer {playlist} />
+    {/if}
   </p>
 {:else}
   <div class="p-3 bg-danger mb-3">

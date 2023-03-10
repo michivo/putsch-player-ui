@@ -32,9 +32,26 @@
 
 </script>
 
-<figure>
+<figure class="w-100" class:active={ currentIndex === index }>
     <figcaption>{audioFile.name}</figcaption>
-    <audio bind:this={audioElement} controls src="https://drive.google.com/uc?id={audioFile.id}&export=download" id="audio{index}" on:ended="{() => onEnded()}">
+    <audio bind:this={audioElement} controls src="https://drive.google.com/uc?id={audioFile.id}&export=download" id="audio{index}" on:ended="{() => onEnded()}" preload="none">
             Your browser does not support the <code>audio</code> element.
     </audio>
 </figure>
+
+<style>
+    figure {
+        width: 100%;
+        transition: background-color 500ms;
+        padding: 0 1rem;
+        border-radius: .5rem;
+    }
+
+    figure audio {
+        width: 100%;
+    }
+
+    figure.active {
+        background-color: var(--bs-info);
+    }
+</style>
