@@ -12,13 +12,18 @@
   let currentStage: PlayerQuestStage | undefined = undefined;
 
   onMount(async () => {
-    speechSynthesis.addEventListener('voiceschanged', setVoice);
-    setVoice();
-    innerVoiceText = 'Hallo Spieler in';
-    if ($currentPlayer) {
-      innerVoiceText += ` ${$currentPlayer.id}`;
+    try {
+      speechSynthesis.addEventListener('voiceschanged', setVoice);
+      setVoice();
+      innerVoiceText = 'Hallo Spieler in';
+      if ($currentPlayer) {
+        innerVoiceText += ` ${$currentPlayer.id}`;
+      }
+      sayIt();
     }
-    sayIt();
+    catch {
+      console.log('Error initializing speech synthesis.')
+    }
 
     await initFirestore();
   });
@@ -80,6 +85,9 @@
   <h2>Du bist Spieler*in {$currentPlayer.id}</h2>
   {#if currentStage}
     <h3>Du bist in Stage {currentStage.name} von Quest {currentStage.questId}</h3>
+    {#if currentStage.currentLocation}
+      <b>Du bist an Ort {currentStage.currentLocation}</b>
+    {/if}
   {/if}
   <p>
     Sobald die innere Stimme zu dir spricht, solltest du etwas hören oder den Text hier sehen:

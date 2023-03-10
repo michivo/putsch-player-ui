@@ -1,13 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<link rel="stylesheet" href="%sveltekit.assets%/bootstrap/bootstrap.min.css">
-		<meta name="viewport" content="width=device-width" />
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
-	</body>
+
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+	<link rel="stylesheet" href="%sveltekit.assets%/bootstrap/bootstrap.min.css">
+	<meta name="viewport" content="width=device-width" />
+	<script>
+		function gapiLoaded() {
+			gapi.load('client', gapiClientLoaded);
+		}
+
+		async function gapiClientLoaded() {
+			await gapi.client.init({
+				apiKey: 'AIzaSyDoUQ5OsiccUtpOoxmuA8WmSFeCcLwtpEw'
+			});
+
+			let response;
+			console.log(gapi.client);
+			gapi.client.load('drive');
+			console.log(gapi.client);
+
+			try {
+				response = await gapi.client.drive.files.list({
+					'pageSize': 10,
+					'fields': 'files(id, name)',
+				});
+			} catch (err) {
+				console.log(err);
+			}
+		}
+	</script>
+	%sveltekit.head%
+</head>
+
+<body data-sveltekit-preload-data="hover">
+	<div style="display: contents">%sveltekit.body%</div>
+	<script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+</body>
+
 </html>

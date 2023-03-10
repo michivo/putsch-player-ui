@@ -28,6 +28,7 @@
 			{/each}
 		</select>
 		<Button color="success" class="w-100 btn-lg mt-2" href="game">OK</Button>
+		<Button color="info" class="w-100 btn-lg mt-2" href="playlist">Playlist Test</Button>
 	</div>
 {/if}
 

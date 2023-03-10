@@ -8,4 +8,5 @@ export interface PlayerQuestStage {
     backupTextId: string,
     stageIndex: number,
     questId: string,
+    currentLocation: string,
 }
