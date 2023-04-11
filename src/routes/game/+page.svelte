@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { doc, getDoc, getDocs, onSnapshot, type Unsubscribe } from 'firebase/firestore';
+  import { doc, onSnapshot, type Unsubscribe } from 'firebase/firestore';
   import { onDestroy, onMount } from 'svelte';
   import { Spinner, Toast, ToastBody, ToastHeader } from 'sveltestrap';
-    import PlaylistPlayer from '../../components/PlaylistPlayer.svelte';
+  import PlaylistPlayer from '../../components/PlaylistPlayer.svelte';
   import { getPlaylist } from '../../services/eventhub';
   import { currentPlayer } from '../../stores/playerStore';
   import { putschFirestore } from '../../tools/firebase';
@@ -17,18 +17,6 @@
   let loading = false;
 
   onMount(async () => {
-    try {
-      speechSynthesis.addEventListener('voiceschanged', setVoice);
-      setVoice();
-      innerVoiceText = 'Hallo Spieler in';
-      if ($currentPlayer) {
-        innerVoiceText += ` ${$currentPlayer.id}`;
-      }
-      sayIt();
-    } catch {
-      console.log('Error initializing speech synthesis.');
-    }
-
     await initFirestore();
   });
 
@@ -44,14 +32,6 @@
     }
 
     const docRef = doc(putschFirestore, 'playerQuests', $currentPlayer.id);
-    const querySnapshot = await getDoc(docRef);
-    if (querySnapshot.exists()) {
-      currentStage = querySnapshot.data() as PlayerQuestStage;
-      if (currentStage.text) {
-        innerVoiceText = currentStage.text;
-        sayIt();
-      }
-    }
 
     firestoreUnsubscribe = onSnapshot(docRef, (data) => {
       if (data.exists()) {
@@ -67,26 +47,6 @@
         }
       }
     });
-  }
-
-  function setVoice() {
-    let voices = speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      var germanVoices = voices.filter((v) => v.lang === 'de-DE' || v.lang === 'de');
-      if (germanVoices.length > 0) {
-        voice = germanVoices[0];
-      } else {
-        voice = voices[0];
-      }
-    }
-  }
-
-  function sayIt() {
-    if (voice) {
-      let u = new SpeechSynthesisUtterance(innerVoiceText);
-      u.voice = voice;
-      speechSynthesis.speak(u);
-    }
   }
 
   function getIndex(entry: PlaylistEntry) {
@@ -129,20 +89,11 @@
       <b>Du bist an Ort {currentStage.currentLocation}</b>
     {/if}
   {/if}
-  <p>
-    Sobald die innere Stimme zu dir spricht, solltest du etwas hören oder den Text hier sehen:
-    <Toast class="me-1">
-      <ToastHeader>Die innere Stimme spricht:</ToastHeader>
-      <ToastBody>
-        {innerVoiceText}
-      </ToastBody>
-    </Toast>
-    {#if loading}
-      <Spinner />
-    {:else}
-      <PlaylistPlayer {playlist} />
-    {/if}
-  </p>
+  {#if loading}
+    <Spinner />
+  {:else}
+    <PlaylistPlayer {playlist} />
+  {/if}
 {:else}
   <div class="p-3 bg-danger mb-3">
     <Toast class="me-1">
