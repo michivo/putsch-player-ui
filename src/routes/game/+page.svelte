@@ -3,21 +3,24 @@
   import { onDestroy, onMount } from 'svelte';
   import { Spinner, Toast, ToastBody, ToastHeader } from 'sveltestrap';
   import PlaylistPlayer from '../../components/PlaylistPlayer.svelte';
-  import { getPlaylist } from '../../services/eventhub';
+  import { getPlayers, getPlaylist } from '../../services/eventhub';
   import { currentPlayer } from '../../stores/playerStore';
   import { putschFirestore } from '../../tools/firebase';
   import type { Playlist, PlaylistEntry } from '../../types/playlist';
   import type { PlayerQuestStage } from '../../types/quest';
+  import { page } from '$app/stores';
 
-  let innerVoiceText = '';
-  let voice: SpeechSynthesisVoice | null = null;
   let firestoreUnsubscribe: Unsubscribe;
   let currentStage: PlayerQuestStage | undefined = undefined;
   let playlist: Playlist | undefined = undefined;
-  let loading = false;
+  let loading = true;
 
   onMount(async () => {
-    await initFirestore();
+    try {
+      await initFirestore();
+    } finally {
+      loading = false;
+    }
   });
 
   onDestroy(() => {
@@ -28,6 +31,18 @@
 
   async function initFirestore() {
     if (!$currentPlayer) {
+      const playerId = $page.url.searchParams.get('playerId');
+      if (playerId) {
+        let players = await getPlayers();
+        if (players.length > 0) {
+          const player = players.find((p) => p.id === playerId);
+          if (player) {
+            currentPlayer.set(player);
+          }
+        }
+      }
+    }
+    if (!$currentPlayer) {
       return;
     }
 
@@ -36,9 +51,6 @@
     firestoreUnsubscribe = onSnapshot(docRef, (data) => {
       if (data.exists()) {
         currentStage = data.data() as PlayerQuestStage;
-        if (currentStage.text) {
-          innerVoiceText = currentStage.text;
-        }
         console.log(currentStage);
         if (currentStage.playlistName) {
           loadPlaylist();
@@ -94,9 +106,11 @@
   {:else}
     <PlaylistPlayer {playlist} />
   {/if}
+{:else if loading}
+  <Spinner />
 {:else}
   <div class="p-3 bg-danger mb-3">
-    <Toast class="me-1">
+    <Toast class="me-1">{loading}
       <ToastHeader>Kein*e Spieler*in ausgewählt</ToastHeader>
       <ToastBody>
         <a href="/..">Zurück zur Auswahl</a>
