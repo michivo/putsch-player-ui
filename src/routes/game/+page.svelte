@@ -50,9 +50,14 @@
 
     firestoreUnsubscribe = onSnapshot(docRef, (data) => {
       if (data.exists()) {
+        const previousStage = currentStage;
         currentStage = data.data() as PlayerQuestStage;
         console.log(currentStage);
         if (currentStage.playlistName) {
+          if(previousStage && previousStage.playlistName === currentStage.playlistName) {
+            console.log(`Skipping update, since playlist ${currentStage.playlistName} has not changed`);
+            return;
+          }
           loadPlaylist();
         } else {
           playlist = undefined;
